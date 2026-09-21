@@ -355,3 +355,75 @@ else:
         f"막대에 마우스를 올리면 각 영화가 10위권 내에 머물렀던 기간(차트인 일수)을 함께 볼 수 있어, "
         f"단기간에 폭발적인 관객을 모았는지 혹은 장기 상영으로 흥행을 유지했는지 분석할 수 있습니다."
     )
+
+st.divider()
+
+
+# ==========================================
+# 📌 구역 5: 월×요일별 관객수 히트맵
+# ==========================================
+st.header("📌 구역 5: 월×요일별 관객수 분포 (Heatmap)")
+st.caption("월과 요일별 일관객수 합계를 히트맵으로 시각화하여 시즌별 및 요일별 극장 방문 특성을 분석합니다.")
+
+# 월 및 요일 데이터 가공
+heatmap_df = df.copy()
+heatmap_df['월_num'] = heatmap_df['날짜_dt'].dt.month
+heatmap_df['월'] = heatmap_df['월_num'].apply(lambda x: f"{x}월")
+
+# 요일 한글 명칭 변환 및 순서 고정 (월요일 ~ 일요일)
+weekday_map = {0: '월요일', 1: '화요일', 2: '수요일', 3: '목요일', 4: '금요일', 5: '토요일', 6: '일요일'}
+heatmap_df['요일'] = heatmap_df['날짜_dt'].dt.dayofweek.map(weekday_map)
+
+day_order = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
+present_months = sorted(heatmap_df['월_num'].unique())
+month_order = [f"{m}월" for m in present_months]
+
+# 피벗 테이블 생성 (월 x 요일, 값이 없으면 0 채움)
+pivot_heatmap = heatmap_df.pivot_table(
+    index='월',
+    columns='요일',
+    values='일관객',
+    aggfunc='sum'
+).reindex(index=month_order, columns=day_order, fill_value=0)
+
+# 히트맵 차트 생성 (진한 색일수록 관객수가 많음)
+fig5 = px.imshow(
+    pivot_heatmap,
+    labels=dict(x="요일", y="월", color="총 관객수(명)"),
+    x=day_order,
+    y=month_order,
+    color_continuous_scale="YlOrRd",
+    aspect="auto",
+    title="<b>월×요일별 관객수 분포 히트맵</b>"
+)
+
+# 툴팁 및 차트 레이아웃 설정
+fig5.update_traces(
+    hovertemplate="<b>%{y} %{x}</b><br>총 관객수: %{z:,}명<extra></extra>"
+)
+
+fig5.update_layout(
+    xaxis=dict(title="요일"),
+    yaxis=dict(title="월", autorange="reversed"),  # 1월부터 아래로 순차 배치
+    coloraxis_colorbar=dict(title="총 관객수 (명)"),
+    height=500,
+    margin=dict(l=20, r=20, t=50, b=20)
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+# 최고 관객 동원 월/요일 피크 추출
+max_val = pivot_heatmap.values.max()
+max_coords = [(month_order[r], day_order[c]) for r in range(len(month_order)) for c in range(len(day_order)) if pivot_heatmap.values[r, c] == max_val]
+
+if max_coords:
+    top_m, top_d = max_coords[0]
+    peak_info = f"1년 중 가장 관객이 많이 집중된 칸은 **{top_m} {top_d}**(합계 {int(max_val):,}명)입니다."
+else:
+    peak_info = "월별/요일별 극장가의 패턴 차이를 명확하게 확인할 수 있습니다."
+
+st.info(
+    f"💡 **이 그래프로 알 수 있는 것:** "
+    f"주말(토/일요일)과 평일 간의 기본 관객 차이뿐만 아니라, 특정 월(방학/명절 등)의 요일별 관객 밀집도를 색상의 짙은 정도(히트맵)로 직관하게 보여줍니다. "
+    f"{peak_info}"
+)
