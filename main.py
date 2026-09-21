@@ -208,5 +208,91 @@ st.info(
 
 st.divider()
 
-st.header("📌 구역 3: 누적 관객수 성장 곡선 (추가 예정)")
-st.caption("차후 개봉 일수 경과에 따른 S-커브 성숙도 분석 및 스크린 수 대비 관객 효율 분석 그래프가 추가될 예정입니다.")
+
+# ==========================================
+# 📌 구역 3: 일별 전체 박스오피스 총 관객수 추이 (영역 그래프)
+# ==========================================
+st.header("📌 구역 3: 일별 전체 관객수 추이 (Area Chart)")
+st.caption("매일 박스오피스 Top 10 영화들의 일관객수 합계를 영역 그래프로 나타내고, 가장 관객이 몰렸던 상위 3일을 표시합니다.")
+
+# 날짜별 Top 10 일관객수 합계 계산
+daily_sum_df = df.groupby('날짜_dt')['일관객'].sum().reset_index().sort_values('날짜_dt')
+
+# 총 관객수가 가장 컸던 상위 3일 추출
+top3_dates = daily_sum_df.nlargest(3, '일관객').sort_values('날짜_dt')
+
+# 영역 그래프(Area Chart) 생성
+fig3 = px.area(
+    daily_sum_df,
+    x='날짜_dt',
+    y='일관객',
+    title="<b>일별 전체 박스오피스(Top 10) 관객수 총합 추이</b>",
+    labels={'날짜_dt': '날짜', '일관객': '총 일관객수(명)'}
+)
+
+# 영역 채우기 및 라인 스타일 설정
+fig3.update_traces(
+    line=dict(color="#2B6CB0", width=2),
+    fillcolor="rgba(66, 153, 225, 0.35)",
+    hovertemplate="<b>날짜</b>: %{x|%Y년 %m월 %d일}<br><b>합계 관객수</b>: %{y:,}명<extra></extra>"
+)
+
+# 상위 3일 피크(Peak) 지점에 별 모양 마커 및 날짜/관객수 텍스트 레이블 표시
+fig3.add_trace(
+    go.Scatter(
+        x=top3_dates['날짜_dt'],
+        y=top3_dates['일관객'],
+        mode='markers+text',
+        name='관객수 Top 3 피크일',
+        marker=dict(size=14, color='#E53E3E', symbol='star'),
+        text=[
+            f"🏆 <b>{row['날짜_dt'].strftime('%m/%d')}</b><br>({int(row['일관객']):,}명)"
+            for _, row in top3_dates.iterrows()
+        ],
+        textposition="top center",
+        textfont=dict(size=12, color="#9B2C2C"),
+        hovertemplate="<b>🏆 흥행 Peak Top 3</b><br>날짜: %{x|%Y년 %m월 %d일}<br>총 관객수: %{y:,}명<extra></extra>"
+    )
+)
+
+# 레이아웃 미화 (텍스트 상단 잘림 방지를 위해 y축 범위 18% 추가 확보)
+max_val = daily_sum_df['일관객'].max()
+fig3.update_layout(
+    xaxis=dict(
+        title="날짜",
+        showgrid=True,
+        gridcolor="rgba(200, 200, 200, 0.2)",
+        tickformat="%Y-%m-%d"
+    ),
+    yaxis=dict(
+        title="일일 총 관객수 (명)",
+        showgrid=True,
+        gridcolor="rgba(200, 200, 200, 0.2)",
+        range=[0, max_val * 1.18]
+    ),
+    hovermode="x unified",
+    margin=dict(l=20, r=20, t=50, b=20),
+    height=480,
+    showlegend=True,
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 관객수 순으로 상위 3일 안내 문구 구성
+top3_summary_list = [
+    f"**{row['날짜_dt'].strftime('%Y년 %m월 %d일')}**({int(row['일관객']):,}명)"
+    for _, row in top3_dates.sort_values('일관객', ascending=False).iterrows()
+]
+top3_text = ", ".join(top3_summary_list)
+
+st.info(
+    f"💡 **이 그래프로 알 수 있는 것:** "
+    f"전체 극장가의 일별 관객 동원력 변화 추이와 명절/휴일/여름 성수기 등 극장가 최전성기 시점을 한눈에 파악할 수 있습니다. "
+    f"1년 중 가장 많은 관객이 극장을 찾았던 상위 3일은 **{top3_text}** 입니다."
+)
+
+st.divider()
+
+st.header("📌 구역 4: 스크린 및 상영횟수 대비 관객 효율 분석 (추가 예정)")
+st.caption("차후 스크린 수 대비 관객 점유율 분석 및 좌석 점유 효율성 그래프가 추가될 예정입니다.")
