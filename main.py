@@ -294,5 +294,64 @@ st.info(
 
 st.divider()
 
-st.header("📌 구역 4: 스크린 및 상영횟수 대비 관객 효율 분석 (추가 예정)")
-st.caption("차후 스크린 수 대비 관객 점유율 분석 및 좌석 점유 효율성 그래프가 추가될 예정입니다.")
+
+# ==========================================
+# 📌 구역 4: 기간 내 관객수 TOP 10 영화 (가로 막대그래프)
+# ==========================================
+st.header("📌 구역 4: 기간 내 관객수 TOP 10 영화 (가로 막대그래프)")
+st.caption("기간 동안 박스오피스 Top 10에 수집된 관객수를 모두 더해 가장 높은 흥행을 기록한 상위 10개 영화를 가로 막대그래프로 보여줍니다.")
+
+# 영화별 총 관객수 및 차트인 일수(데이터 건수) 집계
+top10_agg = df.groupby('영화명').agg(
+    총관객수=('일관객', 'sum'),
+    차트인일수=('날짜_dt', 'count')
+).reset_index()
+
+# 총 관객수 내림차순 정렬 후 상위 10개 선택
+top10_movies_df = top10_agg.sort_values('총관객수', ascending=False).head(10)
+
+if top10_movies_df.empty:
+    st.warning("TOP 10 데이터가 존재하지 않습니다.")
+else:
+    # 가로 막대그래프 생성
+    fig4 = px.bar(
+        top10_movies_df,
+        x='총관객수',
+        y='영화명',
+        orientation='h',
+        title="<b>기간 내 박스오피스 총 관객수 TOP 10</b>",
+        labels={'총관객수': '총 관객수(명)', '영화명': '영화 제목'},
+        color='총관객수',
+        color_continuous_scale='Blues',
+        custom_data=['차트인일수']
+    )
+
+    # 툴팁 및 막대 옆 텍스트 레이블 설정
+    fig4.update_traces(
+        hovertemplate="<b>%{y}</b><br>총 관객수: %{x:,}명<br>Top 10 차트인 기간: %{customdata[0]}일<extra></extra>",
+        texttemplate="%{x:,}명",
+        textposition="outside"
+    )
+
+    # 가장 관객수가 많은 1위 영화가 맨 위에 표시되도록 y축 순서 반전
+    fig4.update_layout(
+        yaxis=dict(autorange="reversed", title="영화 제목"),
+        xaxis=dict(title="총 관객수 (명)", showgrid=True, gridcolor="rgba(200, 200, 200, 0.2)"),
+        coloraxis_showscale=False,
+        height=520,
+        margin=dict(l=20, r=60, t=50, b=20)
+    )
+
+    st.plotly_chart(fig4, use_container_width=True)
+
+    # 1위 영화 정보 추출 및 안내 문구 작성
+    top1_title = top10_movies_df.iloc[0]['영화명']
+    top1_audi = top10_movies_df.iloc[0]['총관객수']
+    top1_days = top10_movies_df.iloc[0]['차트인일수']
+
+    st.info(
+        f"💡 **이 그래프로 알 수 있는 것:** "
+        f"기간 내 전체 흥행 1위는 **[{top1_title}]**(총 {int(top1_audi):,}명, {top1_days}일 차트인)입니다. "
+        f"막대에 마우스를 올리면 각 영화가 10위권 내에 머물렀던 기간(차트인 일수)을 함께 볼 수 있어, "
+        f"단기간에 폭발적인 관객을 모았는지 혹은 장기 상영으로 흥행을 유지했는지 분석할 수 있습니다."
+    )
