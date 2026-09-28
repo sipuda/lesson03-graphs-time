@@ -18,7 +18,6 @@ st.markdown("---")
 # -----------------------------------------------------------------------------
 # 2. 데이터 불러오기 및 전처리
 # -----------------------------------------------------------------------------
-# 제공해주신 새 데이터 URL 반영
 DATA_URL = "https://raw.githubusercontent.com/happykth/data/main/kobis_movies.csv"
 
 @st.cache_data
@@ -68,7 +67,6 @@ fig1 = px.pie(
     color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
-# 마우스 호버 시 장르, 편수, 비율 표기
 fig1.update_traces(
     textposition='inside',
     textinfo='percent+label',
@@ -82,7 +80,36 @@ fig1.update_layout(
 
 st.plotly_chart(fig1, use_container_width=True)
 
-# 그래프 하단 설명 위치
 st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위권에 진입한 영화 중 어떤 장르가 가장 많은 비중을 차지하는지 장르별 시장 분포를 파악할 수 있습니다.")
+
+st.markdown("---")
+
+# =============================================================================
+# 구역 2: 장르 및 영화별 총 관객수 분포 (트리맵)
+# =============================================================================
+st.header("📌 구역 2: 장르 내 영화별 총 관객수 분포")
+
+# 트리맵 생성 (계층 구조: 대표 장르 -> 영화명, 사각형 크기: 총 관객수)
+fig2 = px.treemap(
+    df,
+    path=[px.Constant("전체 영화"), 'first_genre', 'movieNm'],
+    values='total_audi',
+    color='first_genre',
+    title="<b>장르별 및 영화별 총 관객수 비중 (트리맵)</b>",
+    color_discrete_sequence=px.colors.qualitative.Set3
+)
+
+# 마우스 호버 시 영화명과 총 관객수가 보이도록 설정
+fig2.update_traces(
+    hovertemplate="<b>영화명 / 장르:</b> %{label}<br><b>총 관객수:</b> %{value:,}명<extra></extra>"
+)
+
+fig2.update_layout(
+    template="plotly_white"
+)
+
+st.plotly_chart(fig2, use_container_width=True)
+
+st.info("💡 **이 그래프로 알 수 있는 것:** 장르 전체의 총 관객 규모와 그 안에서 특정 개별 영화가 차지하는 흥행 비중을 한눈에 비교 분석할 수 있습니다.")
 
 st.markdown("---")
