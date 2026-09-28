@@ -32,6 +32,10 @@ def load_data():
     else:
         df['first_genre'] = '미분류'
 
+    # 제작 국가 결측치 처리
+    if 'nation' in df.columns:
+        df['nation'] = df['nation'].fillna('기타').astype(str)
+
     # 수치형 컬럼 안전 변환
     numeric_cols = ['first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10']
     for col in numeric_cols:
@@ -191,7 +195,6 @@ st.markdown("---")
 # =============================================================================
 st.header("📌 구역 5: 영화 10편 이상 주요 장르의 총 관객수 분포")
 
-# 영화 편수가 10편 이상인 장르 필터링
 genre_counts_series = df['first_genre'].value_counts()
 top_genres = genre_counts_series[genre_counts_series >= 10].index.tolist()
 df_filtered_genres = df[df['first_genre'].isin(top_genres)]
@@ -202,7 +205,7 @@ fig5 = px.box(
     y='total_audi',
     color='first_genre',
     hover_name='movieNm',
-    points='outliers',  # 이상치 점만 표시
+    points='outliers',
     title="<b>영화 10편 이상 장르별 총 관객수 분포 (박스플롯)</b>",
     labels={
         'first_genre': '장르',
@@ -241,7 +244,7 @@ fig6 = px.scatter(
     size='first_week_audi',
     color='first_genre',
     hover_name='movieNm',
-    size_max=50,  # 버블 최대 크기 설정
+    size_max=50,
     title="<b>개봉일 스크린수 vs 총 관객수 (버블 크기: 첫 주 관객수)</b>",
     labels={
         'first_scrn': '개봉일 스크린수(개)',
@@ -266,5 +269,33 @@ fig6.update_layout(
 st.plotly_chart(fig6, use_container_width=True)
 
 st.info("💡 **이 그래프로 알 수 있는 것:** 원의 크기(첫 주 관객수)를 함께 비교함으로써 초기 집객력이 좋았던 영화가 최종 관객수까지 안정적으로 연결되었는지 다차원적으로 분석할 수 있습니다.")
+
+st.markdown("---")
+
+# =============================================================================
+# 구역 7: 제작 국가 및 장르별 영화 편수 (선버스트 차트)
+# =============================================================================
+st.header("📌 구역 7: 제작 국가 및 장르별 영화 편수 분포")
+
+# 제작 국가 -> 대표 장르 계층 구조 선버스트 생성
+fig7 = px.sunburst(
+    df,
+    path=['nation', 'first_genre'],
+    title="<b>제작 국가 및 장르별 영화 편수 (선버스트 차트)</b>",
+    color='nation',
+    color_discrete_sequence=px.colors.qualitative.Pastel
+)
+
+fig7.update_traces(
+    hovertemplate="<b>구분:</b> %{label}<br><b>영화 수:</b> %{value}편<br><b>상위 대비 비율:</b> %{percentParent:.1%}<extra></extra>"
+)
+
+fig7.update_layout(
+    template="plotly_white"
+)
+
+st.plotly_chart(fig7, use_container_width=True)
+
+st.info("💡 **이 그래프로 알 수 있는 것:** 제작 국가별 전체 영화 편수 비중과, 각 국가 내에서 주력으로 제작/개봉된 주요 장르의 구조적 분포를 한눈에 파악할 수 있습니다.")
 
 st.markdown("---")
