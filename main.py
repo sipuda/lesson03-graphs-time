@@ -300,39 +300,31 @@ st.info("💡 **이 그래프로 알 수 있는 것:** 제작 국가별 전체 �
 st.markdown("---")
 
 # =============================================================================
-# 구역 8: 10위권에 오래 머문 영화는 총 관객도 많은가 (산점도)
+# 구역 8: 영화들은 10위권에 대개 며칠쯤 머무는가 (히스토그램)
 # =============================================================================
-st.header("📌 구역 8: 10위권에 오래 머문 영화는 총 관객도 많은가")
+st.header("📌 구역 8: 영화들은 10위권에 대개 며칠쯤 머무는가")
 
-fig8 = px.scatter(
+fig8 = px.histogram(
     df,
     x='days_in_top10',
-    y='total_audi',
-    color='first_genre',
-    hover_name='movieNm',
-    title="<b>10위권에 오래 머문 영화는 총 관객도 많은가</b>",
-    labels={
-        'days_in_top10': '10위권에 머문 날수(일)',
-        'total_audi': '총 관객수(명)',
-        'first_genre': '장르',
-        'movieNm': '영화명'
-    },
-    color_discrete_sequence=px.colors.qualitative.Alphabet
+    nbins=20,
+    title="<b>영화들은 10위권에 대개 며칠쯤 머무는가</b>",
+    labels={'days_in_top10': '10위권에 머문 날수(일)', 'count': '영화 수(편)'},
+    color_discrete_sequence=['#FF9900']
 )
 
 fig8.update_traces(
-    marker=dict(size=10, opacity=0.8),
-    hovertemplate="<b>영화명:</b> %{hovertext}<br><b>장르:</b> %{fullData.name}<br><b>10위권 머문 날수:</b> %{x}일<br><b>총 관객수:</b> %{y:,}명<extra></extra>"
+    hovertemplate="<b>머문 날수 구간:</b> %{x}일<br><b>영화 수:</b> %{y}편<extra></extra>"
 )
 
 fig8.update_layout(
     xaxis_title="10위권에 머문 날수 (일)",
-    yaxis_title="총 관객수 (명)",
+    yaxis_title="영화 수 (편)",
     template="plotly_white"
 )
 
 st.plotly_chart(fig8, use_container_width=True)
 
-st.info("💡 **이 그래프로 알 수 있는 것:** 10위권에 상주한 기간(일수)이 길어질수록 최종 누적 관객수가 늘어나는 강한 양의 관계가 나타나는지 확인할 수 있습니다.")
+st.info("💡 **이 그래프로 알 수 있는 것:** 대부분의 영화가 박스오피스 10위권 내에 며칠 동안 유지되는지 분포의 대세 구간과 차트를 오랫동안 지킨 영화의 비중을 파악할 수 있습니다.")
 
 st.markdown("---")
