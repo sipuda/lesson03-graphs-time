@@ -53,11 +53,9 @@ except Exception as e:
 # =============================================================================
 st.header("📌 구역 1: 장르별 영화 편수 분포")
 
-# 장르별 편수 집계
 genre_counts = df['first_genre'].value_counts().reset_index()
 genre_counts.columns = ['장르', '영화편수']
 
-# 도넛 그래프 생성 (hole=0.4)
 fig1 = px.pie(
     genre_counts,
     names='장르',
@@ -89,7 +87,6 @@ st.markdown("---")
 # =============================================================================
 st.header("📌 구역 2: 장르 내 영화별 총 관객수 분포")
 
-# 트리맵 생성 (계층 구조: 대표 장르 -> 영화명, 사각형 크기: 총 관객수)
 fig2 = px.treemap(
     df,
     path=[px.Constant("전체 영화"), 'first_genre', 'movieNm'],
@@ -99,7 +96,6 @@ fig2 = px.treemap(
     color_discrete_sequence=px.colors.qualitative.Set3
 )
 
-# 마우스 호버 시 영화명과 총 관객수가 보이도록 설정
 fig2.update_traces(
     hovertemplate="<b>영화명 / 장르:</b> %{label}<br><b>총 관객수:</b> %{value:,}명<extra></extra>"
 )
@@ -111,5 +107,46 @@ fig2.update_layout(
 st.plotly_chart(fig2, use_container_width=True)
 
 st.info("💡 **이 그래프로 알 수 있는 것:** 장르 전체의 총 관객 규모와 그 안에서 특정 개별 영화가 차지하는 흥행 비중을 한눈에 비교 분석할 수 있습니다.")
+
+st.markdown("---")
+
+# =============================================================================
+# 구역 3: 총 관객수 분포 (히스토그램)
+# =============================================================================
+st.header("📌 구역 3: 총 관객수 히스토그램")
+
+# 가장 관객수가 많은 영화 정보 계산
+max_movie = df.loc[df['total_audi'].idxmax()]
+max_movie_name = max_movie['movieNm']
+max_movie_audi = int(max_movie['total_audi'])
+
+# 히스토그램 생성
+fig3 = px.histogram(
+    df,
+    x='total_audi',
+    nbins=30,
+    title="<b>개봉 영화 총 관객수 분포 (히스토그램)</b>",
+    labels={'total_audi': '총 관객수(명)', 'count': '영화 수(편)'},
+    color_discrete_sequence=['#3366CC']
+)
+
+fig3.update_traces(
+    hovertemplate="<b>관객수 구간:</b> %{x}명<br><b>영화 수:</b> %{y}편<extra></extra>"
+)
+
+fig3.update_layout(
+    xaxis_title="총 관객수 (명)",
+    yaxis_title="영화 수 (편)",
+    template="plotly_white"
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 하단 정보 분석 문구 출력
+st.info(
+    f"💡 **이 그래프로 알 수 있는 것:**\n"
+    f"- 대부분의 영화는 관객수 **하위 구간(초반 구간)**에 빽빽하게 몰려 있으며, 고흥행 영화로 갈수록 편수가 급격히 줄어드는 **비대칭적 분포**를 보입니다.\n"
+    f"- 이 기간 동안 가장 관객이 많은 1위 영화는 **[{max_movie_name}]** (총 **{max_movie_audi:,}명**)입니다."
+)
 
 st.markdown("---")
