@@ -115,12 +115,10 @@ st.markdown("---")
 # =============================================================================
 st.header("📌 구역 3: 총 관객수 히스토그램")
 
-# 가장 관객수가 많은 영화 정보 계산
 max_movie = df.loc[df['total_audi'].idxmax()]
 max_movie_name = max_movie['movieNm']
 max_movie_audi = int(max_movie['total_audi'])
 
-# 히스토그램 생성
 fig3 = px.histogram(
     df,
     x='total_audi',
@@ -142,11 +140,131 @@ fig3.update_layout(
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 하단 정보 분석 문구 출력
 st.info(
     f"💡 **이 그래프로 알 수 있는 것:**\n"
     f"- 대부분의 영화는 관객수 **하위 구간(초반 구간)**에 빽빽하게 몰려 있으며, 고흥행 영화로 갈수록 편수가 급격히 줄어드는 **비대칭적 분포**를 보입니다.\n"
     f"- 이 기간 동안 가장 관객이 많은 1위 영화는 **[{max_movie_name}]** (총 **{max_movie_audi:,}명**)입니다."
 )
+
+st.markdown("---")
+
+# =============================================================================
+# 구역 4: 개봉일 스크린수 vs 총 관객수 (산점도)
+# =============================================================================
+st.header("📌 구역 4: 개봉일 스크린수와 총 관객수의 관계")
+
+fig4 = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    color='first_genre',
+    hover_name='movieNm',
+    title="<b>개봉일 스크린수 vs 총 관객수 (산점도)</b>",
+    labels={
+        'first_scrn': '개봉일 스크린수(개)',
+        'total_audi': '총 관객수(명)',
+        'first_genre': '장르',
+        'movieNm': '영화명'
+    },
+    color_discrete_sequence=px.colors.qualitative.Alphabet
+)
+
+fig4.update_traces(
+    marker=dict(size=10, opacity=0.8),
+    hovertemplate="<b>영화명:</b> %{hovertext}<br><b>장르:</b> %{fullData.name}<br><b>개봉일 스크린수:</b> %{x:,}개<br><b>총 관객수:</b> %{y:,}명<extra></extra>"
+)
+
+fig4.update_layout(
+    xaxis_title="개봉일 스크린수 (개)",
+    yaxis_title="총 관객수 (명)",
+    template="plotly_white"
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
+st.info("💡 **이 그래프로 알 수 있는 것:** 개봉 당일 확보한 스크린수가 많을수록 최종 누적 관객수도 증가하는 양의 상관관계를 보이는지, 장르별 스크린 확보 수준에 차이가 있는지 파악할 수 있습니다.")
+
+st.markdown("---")
+
+# =============================================================================
+# 구역 5: 주요 장르별 총 관객수 분포 (박스플롯)
+# =============================================================================
+st.header("📌 구역 5: 영화 10편 이상 주요 장르의 총 관객수 분포")
+
+# 영화 편수가 10편 이상인 장르 필터링
+genre_counts_series = df['first_genre'].value_counts()
+top_genres = genre_counts_series[genre_counts_series >= 10].index.tolist()
+df_filtered_genres = df[df['first_genre'].isin(top_genres)]
+
+fig5 = px.box(
+    df_filtered_genres,
+    x='first_genre',
+    y='total_audi',
+    color='first_genre',
+    hover_name='movieNm',
+    points='outliers',  # 이상치 점만 표시
+    title="<b>영화 10편 이상 장르별 총 관객수 분포 (박스플롯)</b>",
+    labels={
+        'first_genre': '장르',
+        'total_audi': '총 관객수(명)',
+        'movieNm': '영화명'
+    },
+    color_discrete_sequence=px.colors.qualitative.Set2
+)
+
+fig5.update_traces(
+    hovertemplate="<b>영화명:</b> %{hovertext}<br><b>장르:</b> %{x}<br><b>총 관객수:</b> %{y:,}명<extra></extra>"
+)
+
+fig5.update_layout(
+    xaxis_title="장르",
+    yaxis_title="총 관객수 (명)",
+    showlegend=False,
+    template="plotly_white"
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+st.info("💡 **이 그래프로 알 수 있는 것:** 각 장르별 관객수의 중앙값과 편차 범위, 그리고 상자 밖으로 튀어나온 이상치(Outlier) 점을 통해 해당 장르에서 특별히 흥행 대박을 터뜨린 대작 영화가 누구인지 확인할 수 있습니다.")
+
+st.markdown("---")
+
+# =============================================================================
+# 구역 6: 개봉일 스크린수 vs 총 관객수 (첫 주 관객수 버블 차트)
+# =============================================================================
+st.header("📌 구역 6: 개봉일 스크린수, 총 관객수 및 첫 주 관객수 (버블 차트)")
+
+fig6 = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    size='first_week_audi',
+    color='first_genre',
+    hover_name='movieNm',
+    size_max=50,  # 버블 최대 크기 설정
+    title="<b>개봉일 스크린수 vs 총 관객수 (버블 크기: 첫 주 관객수)</b>",
+    labels={
+        'first_scrn': '개봉일 스크린수(개)',
+        'total_audi': '총 관객수(명)',
+        'first_week_audi': '첫 주 관객수(명)',
+        'first_genre': '장르',
+        'movieNm': '영화명'
+    },
+    color_discrete_sequence=px.colors.qualitative.Alphabet
+)
+
+fig6.update_traces(
+    hovertemplate="<b>영화명:</b> %{hovertext}<br><b>장르:</b> %{fullData.name}<br><b>개봉일 스크린수:</b> %{x:,}개<br><b>총 관객수:</b> %{y:,}명<br><b>첫 주 관객수:</b> %{marker.size:,}명<extra></extra>"
+)
+
+fig6.update_layout(
+    xaxis_title="개봉일 스크린수 (개)",
+    yaxis_title="총 관객수 (명)",
+    template="plotly_white"
+)
+
+st.plotly_chart(fig6, use_container_width=True)
+
+st.info("💡 **이 그래프로 알 수 있는 것:** 원의 크기(첫 주 관객수)를 함께 비교함으로써 초기 집객력이 좋았던 영화가 최종 관객수까지 안정적으로 연결되었는지 다차원적으로 분석할 수 있습니다.")
 
 st.markdown("---")
